@@ -1,0 +1,51 @@
+# Import libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.svm import LinearSVC
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+import seaborn as sns
+
+# Step 1: Load dataset (example: SMS Spam Collection)
+url = "https://raw.githubusercontent.com/justmarkham/pycon-2016-tutorial/master/data/sms.tsv"
+data = pd.read_csv(url, sep='\t', header=None, names=['label', 'message'])
+
+# Step 2: Encode labels (ham=0, spam=1)
+data['label_num'] = data.label.map({'ham':0, 'spam':1})
+
+# Step 3: Split data
+X_train, X_test, y_train, y_test = train_test_split(
+    data['message'], data['label_num'], test_size=0.2, random_state=42
+)
+
+# Step 4: Vectorize text
+vectorizer = TfidfVectorizer(stop_words='english', max_df=0.8)
+X_train_tfidf = vectorizer.fit_transform(X_train)
+X_test_tfidf = vectorizer.transform(X_test)
+
+# Step 5: Train Naive Bayes model
+nb = MultinomialNB()
+nb.fit(X_train_tfidf, y_train)
+nb_pred = nb.predict(X_test_tfidf)
+
+# Step 6: Train SVM model
+svm = LinearSVC()
+svm.fit(X_train_tfidf, y_train)
+svm_pred = svm.predict(X_test_tfidf)
+
+# Step 7: Evaluation
+print("Naive Bayes Accuracy:", accuracy_score(y_test, nb_pred))
+print("SVM Accuracy:", accuracy_score(y_test, svm_pred))
+
+# Step 8: Visualization (Confusion Matrix)
+cm = confusion_matrix(y_test, nb_pred)
+plt.figure(figsize=(5,4))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+plt.title("Naive Bayes Confusion Matrix")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.tight_layout()
+plt.show()S
